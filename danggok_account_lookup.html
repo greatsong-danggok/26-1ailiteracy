@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>당곡고 계정 조회</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f3ee;
+    --ink: #1a1a1a;
+    --muted: #6b6358;
+    --line: #d9d2c4;
+    --card: #ffffff;
+    --accent: #d94436;
+    --accent-soft: #fce8e5;
+    --ok: #2d7a4f;
+    --ok-soft: #e3f1ea;
+    --shadow: 0 1px 0 rgba(0,0,0,0.04), 0 8px 24px rgba(50,40,30,0.06);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: 'Gowun Dodum', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.55;
+    -webkit-tap-highlight-color: transparent;
+    padding: 20px 16px 60px;
+  }
+  .wrap { max-width: 520px; margin: 0 auto; }
+  header {
+    text-align: center;
+    padding: 12px 0 28px;
+  }
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: var(--muted);
+    border: 1px solid var(--line);
+    padding: 4px 10px;
+    border-radius: 999px;
+    margin-bottom: 12px;
+  }
+  h1 {
+    font-size: 26px;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+  }
+  h1 .dot { color: var(--accent); }
+  .sub {
+    color: var(--muted);
+    font-size: 13px;
+    margin-top: 6px;
+  }
+
+  /* 탭 */
+  .tabs {
+    display: flex;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 4px;
+    margin-bottom: 16px;
+  }
+  .tab {
+    flex: 1;
+    padding: 11px 8px;
+    text-align: center;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--muted);
+    background: transparent;
+    border: none;
+    border-radius: 9px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .tab.active {
+    background: var(--ink);
+    color: #fff;
+  }
+
+  /* 카드 */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 22px 20px;
+    box-shadow: var(--shadow);
+  }
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* 입력 영역 */
+  label {
+    display: block;
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .row { display: flex; gap: 10px; }
+  .row > * { flex: 1; }
+  input[type="text"], select {
+    width: 100%;
+    font-family: inherit;
+    font-size: 16px;
+    padding: 13px 14px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #fdfcf9;
+    color: var(--ink);
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  input[type="text"]:focus, select:focus {
+    outline: none;
+    border-color: var(--ink);
+    background: #fff;
+  }
+  #idInput {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 22px;
+    letter-spacing: 0.08em;
+    text-align: center;
+    padding: 16px 14px;
+  }
+  select {
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3e%3cpath d='M1 1l5 5 5-5' stroke='%236b6358' stroke-width='1.5' fill='none' stroke-linecap='round'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 36px;
+  }
+  .hint {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 8px;
+    line-height: 1.5;
+  }
+  .hint code {
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--bg);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+  }
+
+  /* 결과 영역 */
+  #result { margin-top: 18px; }
+  .result-card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    overflow: hidden;
+    animation: slideIn 0.25s ease-out;
+    box-shadow: var(--shadow);
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .result-head {
+    padding: 16px 20px;
+    background: var(--ink);
+    color: #fff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .result-head .who {
+    font-size: 15px;
+  }
+  .result-head .who strong { font-weight: 400; }
+  .result-head .who .id {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    opacity: 0.6;
+    margin-left: 6px;
+  }
+  .credential {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--line);
+  }
+  .credential:last-child { border-bottom: none; }
+  .cred-label {
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .cred-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .cred-value {
+    flex: 1;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--ink);
+    background: var(--bg);
+    padding: 12px 14px;
+    border-radius: 8px;
+    word-break: break-all;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-user-select: all;
+    user-select: all;
+  }
+  .cred-value.hidden {
+    letter-spacing: 0.1em;
+  }
+  .icon-btn {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--line);
+    background: #fff;
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    color: var(--muted);
+  }
+  .icon-btn:hover { border-color: var(--ink); color: var(--ink); }
+  .icon-btn:active { transform: scale(0.95); }
+  .icon-btn.copied {
+    background: var(--ok-soft);
+    border-color: var(--ok);
+    color: var(--ok);
+  }
+  .icon-btn svg { width: 20px; height: 20px; }
+
+  /* 에러 */
+  .error {
+    background: var(--accent-soft);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    padding: 14px 16px;
+    border-radius: 12px;
+    font-size: 14px;
+    text-align: center;
+    animation: slideIn 0.2s ease-out;
+  }
+
+  /* 토스트 */
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--ink);
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 999px;
+    font-size: 13px;
+    opacity: 0;
+    transition: all 0.25s;
+    pointer-events: none;
+    z-index: 100;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* 안내 */
+  .notice {
+    margin-top: 24px;
+    padding: 14px 16px;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.7;
+    border-left: 2px solid var(--line);
+  }
+  .notice strong { color: var(--ink); font-weight: 400; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="badge">당곡고등학교 · 정보 수업</div>
+    <h1>내 계정 찾기<span class="dot">.</span></h1>
+    <div class="sub">학번을 입력하면 아이디와 비밀번호를 보여줘요</div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-panel="num">학번 입력</button>
+    <button class="tab" data-panel="sel">반·번호 선택</button>
+  </div>
+
+  <div class="card">
+    <!-- 학번 입력 패널 -->
+    <div class="panel active" id="panel-num">
+      <label for="idInput">학번 5자리</label>
+      <input type="text" id="idInput" inputmode="text" autocomplete="off" autocapitalize="off" placeholder="10501" maxlength="5">
+      <div class="hint">
+        예: <code>10501</code> = 1학년 5반 1번 / <code>105T1</code> = 5반 교사1
+      </div>
+    </div>
+
+    <!-- 드롭다운 패널 -->
+    <div class="panel" id="panel-sel">
+      <label>학급과 번호를 선택하세요</label>
+      <div class="row">
+        <select id="selClass">
+          <option value="">반 선택</option>
+        </select>
+        <select id="selNum" disabled>
+          <option value="">번호 선택</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div id="result"></div>
+
+  <div class="notice">
+    <strong>안내</strong><br>
+    · 복사 버튼을 누르면 자동으로 클립보드에 저장돼요<br>
+    · 비밀번호는 기본적으로 가려져 있어요. 눈 모양 버튼으로 확인하세요<br>
+    · 비밀번호는 절대 다른 사람과 공유하지 마세요
+  </div>
+</div>
+
+<div class="toast" id="toast">복사되었습니다</div>
+
+<script>
+// === 학생 계정 데이터 ===
+const RAW_DATA = [
+  ["1","5","교1","h111t01","h111266+"],
+  ["1","5","교2","h111t02","h111011$"],
+  ["1","5","1","h111s01","h111772&"],
+  ["1","5","2","h111s02","h111072^"],
+  ["1","5","3","h111s03","h111283="],
+  ["1","5","4","h111s04","h111380%"],
+  ["1","5","5","h111s05","h111133+"],
+  ["1","5","6","h111s06","h111004="],
+  ["1","5","7","h111s07","h111080-"],
+  ["1","5","8","h111s08","h111359$"],
+  ["1","5","9","h111s09","h111733!"],
+  ["1","5","10","h111s10","h111859!"],
+  ["1","5","11","h111s11","h111191&"],
+  ["1","5","12","h111s12","h111859^"],
+  ["1","5","13","h111s13","h111393^"],
+  ["1","5","14","h111s14","h111538#"],
+  ["1","5","15","h111s15","h111395)"],
+  ["1","5","16","h111s16","h111295="],
+  ["1","5","17","h111s17","h111484#"],
+  ["1","5","18","h111s18","h111457*"],
+  ["1","5","19","h111s19","h111877="],
+  ["1","5","20","h111s20","h111461*"],
+  ["1","5","21","h111s21","h111778#"],
+  ["1","5","22","h111s22","h111904)"],
+  ["1","5","23","h111s23","h111583-"],
+  ["1","5","24","h111s24","h111401^"],
+  ["1","5","25","h111s25","h111465!"],
+  ["1","5","26","h111s26","h111598)"],
+  ["1","5","27","h111s27","h111545="],
+  ["1","5","28","h111s28","h111262$"],
+  ["1","5","29","h111s29","h111908*"],
+  ["1","5","30","h111s30","h111605*"],
+  ["1","5","31","h111s31","h111785="],
+  ["1","5","32","h111s32","h111086@"],
+  ["1","5","33","h111s33","h111194("],
+  ["1","5","34","h111s34","h111625^"],
+  ["1","5","35","h111s35","h111525$"],
+  ["1","6","교1","h112t01","h112564$"],
+  ["1","6","교2","h112t02","h112736("],
+  ["1","6","1","h112s01","h112286$"],
+  ["1","6","2","h112s02","h112224="],
+  ["1","6","3","h112s03","h112505*"],
+  ["1","6","4","h112s04","h112563="],
+  ["1","6","5","h112s05","h112895&"],
+  ["1","6","6","h112s06","h112069&"],
+  ["1","6","7","h112s07","h112334$"],
+  ["1","6","8","h112s08","h112366%"],
+  ["1","6","9","h112s09","h112535*"],
+  ["1","6","10","h112s10","h112575#"],
+  ["1","6","11","h112s11","h112688%"],
+  ["1","6","12","h112s12","h112530&"],
+  ["1","6","13","h112s13","h112087#"],
+  ["1","6","14","h112s14","h112428$"],
+  ["1","6","15","h112s15","h112251="],
+  ["1","6","16","h112s16","h112554("],
+  ["1","6","17","h112s17","h112391*"],
+  ["1","6","18","h112s18","h112699)"],
+  ["1","6","19","h112s19","h112250)"],
+  ["1","6","20","h112s20","h112911$"],
+  ["1","6","21","h112s21","h112187#"],
+  ["1","6","22","h112s22","h112694-"],
+  ["1","6","23","h112s23","h112289&"],
+  ["1","6","24","h112s24","h112699%"],
+  ["1","6","25","h112s25","h112211%"],
+  ["1","6","26","h112s26","h112766^"],
+  ["1","6","27","h112s27","h112790^"],
+  ["1","6","28","h112s28","h112892="],
+  ["1","6","29","h112s29","h112624)"],
+  ["1","6","30","h112s30","h112665)"],
+  ["1","6","31","h112s31","h112123!"],
+  ["1","6","32","h112s32","h112636)"],
+  ["1","6","33","h112s33","h112700="],
+  ["1","6","34","h112s34","h112995#"],
+  ["1","6","35","h112s35","h112514^"],
+  ["1","7","교1","h113t01","h113019!"],
+  ["1","7","교2","h113t02","h113511@"],
+  ["1","7","1","h113s01","h113398("],
+  ["1","7","2","h113s02","h113913+"],
+  ["1","7","3","h113s03","h113225#"],
+  ["1","7","4","h113s04","h113449&"],
+  ["1","7","5","h113s05","h113450("],
+  ["1","7","6","h113s06","h113195="],
+  ["1","7","7","h113s07","h113842%"],
+  ["1","7","8","h113s08","h113757*"],
+  ["1","7","9","h113s09","h113511%"],
+  ["1","7","10","h113s10","h113259&"],
+  ["1","7","11","h113s11","h113446="],
+  ["1","7","12","h113s12","h113507%"],
+  ["1","7","13","h113s13","h113243-"],
+  ["1","7","14","h113s14","h113470$"],
+  ["1","7","15","h113s15","h113858("],
+  ["1","7","16","h113s16","h113365$"],
+  ["1","7","17","h113s17","h113554+"],
+  ["1","7","18","h113s18","h113020*"],
+  ["1","7","19","h113s19","h113935%"],
+  ["1","7","20","h113s20","h113641^"],
+  ["1","7","21","h113s21","h113132^"],
+  ["1","7","22","h113s22","h113919!"],
+  ["1","7","23","h113s23","h113145@"],
+  ["1","7","24","h113s24","h113875#"],
+  ["1","7","25","h113s25","h113506-"],
+  ["1","7","26","h113s26","h113562+"],
+  ["1","7","27","h113s27","h113846#"],
+  ["1","7","28","h113s28","h113752!"],
+  ["1","7","29","h113s29","h113702$"],
+  ["1","7","30","h113s30","h113003)"],
+  ["1","7","31","h113s31","h113857^"],
+  ["1","7","32","h113s32","h113943$"],
+  ["1","7","33","h113s33","h113672="],
+  ["1","7","34","h113s34","h113435!"],
+  ["1","7","35","h113s35","h113977&"],
+  ["1","8","교1","h114t01","h114735("],
+  ["1","8","교2","h114t02","h114845!"],
+  ["1","8","1","h114s01","h114625("],
+  ["1","8","2","h114s02","h114653^"],
+  ["1","8","3","h114s03","h114452&"],
+  ["1","8","4","h114s04","h114779#"],
+  ["1","8","5","h114s05","h114024("],
+  ["1","8","6","h114s06","h114870@"],
+  ["1","8","7","h114s07","h114595%"],
+  ["1","8","8","h114s08","h114247!"],
+  ["1","8","9","h114s09","h114070%"],
+  ["1","8","10","h114s10","h114371@"],
+  ["1","8","11","h114s11","h114999@"],
+  ["1","8","12","h114s12","h114547("],
+  ["1","8","13","h114s13","h114692="],
+  ["1","8","14","h114s14","h114302%"],
+  ["1","8","15","h114s15","h114729!"],
+  ["1","8","16","h114s16","h114235-"],
+  ["1","8","17","h114s17","h114754="],
+  ["1","8","18","h114s18","h114665$"],
+  ["1","8","19","h114s19","h114110%"],
+  ["1","8","20","h114s20","h114073#"],
+  ["1","8","21","h114s21","h114132@"],
+  ["1","8","22","h114s22","h114814^"],
+  ["1","8","23","h114s23","h114213)"],
+  ["1","8","24","h114s24","h114805@"],
+  ["1","8","25","h114s25","h114296^"],
+  ["1","8","26","h114s26","h114990!"],
+  ["1","8","27","h114s27","h114663^"],
+  ["1","8","28","h114s28","h114665$"],
+  ["1","8","29","h114s29","h114896#"],
+  ["1","8","30","h114s30","h114895)"],
+  ["1","8","31","h114s31","h114698("],
+  ["1","8","32","h114s32","h114765+"],
+  ["1","8","33","h114s33","h114211="],
+  ["1","8","34","h114s34","h114736-"],
+  ["1","8","35","h114s35","h114765&"]
+];
+
+// 데이터 파싱 및 인덱싱
+// 학번 키: 1학년+학급2자리+번호2자리, 교사는 105T1/105T2 등
+const accounts = {};   // key: "10501" → {grade, klass, num, id, pw, label}
+const byClass = {};    // class → [번호 목록]
+
+RAW_DATA.forEach(row => {
+  const [grade, klass, num, id, pw] = row;
+  if (!grade) return;
+
+  let key, label;
+  const gradeStr = String(grade);
+  const klassStr = String(klass).padStart(2, '0');
+
+  if (num.startsWith('교')) {
+    // 교사: 교1 → T1, 교2 → T2
+    const tNum = num.replace('교', '');
+    key = `${gradeStr}${klassStr}T${tNum}`;
+    label = `${grade}학년 ${klass}반 교사${tNum}`;
+  } else {
+    const numStr = String(num).padStart(2, '0');
+    key = `${gradeStr}${klassStr}${numStr}`;
+    label = `${grade}학년 ${klass}반 ${num}번`;
+  }
+
+  accounts[key] = { grade, klass, num, id, pw, label, key };
+
+  if (!byClass[klass]) byClass[klass] = [];
+  byClass[klass].push({ num, key, label });
+});
+
+// ===== 탭 전환 =====
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-' + tab.dataset.panel).classList.add('active');
+    document.getElementById('result').innerHTML = '';
+  });
+});
+
+// ===== 학번 직접 입력 =====
+const idInput = document.getElementById('idInput');
+idInput.addEventListener('input', e => {
+  // 대문자 변환 + 영숫자만
+  let v = e.target.value.toUpperCase().replace(/[^0-9T]/g, '');
+  if (v.length > 5) v = v.slice(0, 5);
+  e.target.value = v;
+
+  if (v.length === 5) {
+    lookup(v);
+  } else {
+    document.getElementById('result').innerHTML = '';
+  }
+});
+
+// ===== 드롭다운 =====
+const selClass = document.getElementById('selClass');
+const selNum = document.getElementById('selNum');
+
+// 학급 옵션 채우기
+Object.keys(byClass).sort((a, b) => Number(a) - Number(b)).forEach(k => {
+  const opt = document.createElement('option');
+  opt.value = k;
+  opt.textContent = `${k}반`;
+  selClass.appendChild(opt);
+});
+
+selClass.addEventListener('change', () => {
+  const k = selClass.value;
+  selNum.innerHTML = '<option value="">번호 선택</option>';
+  document.getElementById('result').innerHTML = '';
+
+  if (!k) {
+    selNum.disabled = true;
+    return;
+  }
+  selNum.disabled = false;
+
+  // 교사 먼저, 그다음 번호 순
+  const items = byClass[k].slice().sort((a, b) => {
+    const ta = a.num.startsWith('교');
+    const tb = b.num.startsWith('교');
+    if (ta && !tb) return -1;
+    if (!ta && tb) return 1;
+    if (ta && tb) return a.num.localeCompare(b.num);
+    return Number(a.num) - Number(b.num);
+  });
+
+  items.forEach(item => {
+    const opt = document.createElement('option');
+    opt.value = item.key;
+    opt.textContent = item.num.startsWith('교') ? `교사 ${item.num.replace('교', '')}` : `${item.num}번`;
+    selNum.appendChild(opt);
+  });
+});
+
+selNum.addEventListener('change', () => {
+  if (selNum.value) lookup(selNum.value);
+  else document.getElementById('result').innerHTML = '';
+});
+
+// ===== 조회 및 결과 렌더링 =====
+function lookup(key) {
+  const result = document.getElementById('result');
+  const acc = accounts[key];
+
+  if (!acc) {
+    result.innerHTML = `
+      <div class="error">
+        해당 학번이 없어요. 다시 확인해 주세요.<br>
+        <small style="opacity:0.75">입력: ${escapeHtml(key)}</small>
+      </div>`;
+    return;
+  }
+
+  result.innerHTML = `
+    <div class="result-card">
+      <div class="result-head">
+        <div class="who">
+          <strong>${escapeHtml(acc.label)}</strong>
+          <span class="id">${escapeHtml(acc.key)}</span>
+        </div>
+      </div>
+      <div class="credential">
+        <div class="cred-label">아이디</div>
+        <div class="cred-row">
+          <div class="cred-value" id="idValue">${escapeHtml(acc.id)}</div>
+          <button class="icon-btn" data-copy="${escapeHtml(acc.id)}" aria-label="아이디 복사">
+            ${ICON_COPY}
+          </button>
+        </div>
+      </div>
+      <div class="credential">
+        <div class="cred-label">비밀번호</div>
+        <div class="cred-row">
+          <div class="cred-value hidden" id="pwValue" data-real="${escapeHtml(acc.pw)}">${'●'.repeat(acc.pw.length)}</div>
+          <button class="icon-btn" id="pwToggle" aria-label="비밀번호 보기">
+            ${ICON_EYE}
+          </button>
+          <button class="icon-btn" data-copy="${escapeHtml(acc.pw)}" aria-label="비밀번호 복사">
+            ${ICON_COPY}
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // 복사 버튼
+  result.querySelectorAll('[data-copy]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      copyToClipboard(btn.dataset.copy, btn);
+    });
+  });
+
+  // 비밀번호 토글
+  const pwToggle = document.getElementById('pwToggle');
+  const pwValue = document.getElementById('pwValue');
+  let visible = false;
+  pwToggle.addEventListener('click', () => {
+    visible = !visible;
+    if (visible) {
+      pwValue.textContent = pwValue.dataset.real;
+      pwValue.classList.remove('hidden');
+      pwToggle.innerHTML = ICON_EYE_OFF;
+    } else {
+      pwValue.textContent = '●'.repeat(pwValue.dataset.real.length);
+      pwValue.classList.add('hidden');
+      pwToggle.innerHTML = ICON_EYE;
+    }
+  });
+}
+
+// ===== 복사 =====
+async function copyToClipboard(text, btn) {
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch (e) {
+    // fallback
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (_) {}
+    document.body.removeChild(ta);
+  }
+  showToast('복사되었습니다');
+  if (btn) {
+    const original = btn.innerHTML;
+    btn.classList.add('copied');
+    btn.innerHTML = ICON_CHECK;
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      btn.innerHTML = original;
+    }, 1500);
+  }
+}
+
+// ===== 토스트 =====
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 1600);
+}
+
+// ===== 유틸 =====
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
+// ===== 아이콘 =====
+const ICON_COPY = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>`;
+const ICON_CHECK = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>`;
+const ICON_EYE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>`;
+const ICON_EYE_OFF = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.5 10.5 0 0 1 12 19c-6.5 0-10-7-10-7a18.5 18.5 0 0 1 4.06-4.94M9.9 4.24A10 10 0 0 1 12 4c6.5 0 10 7 10 7a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="2" y1="2" x2="22" y2="22"/></svg>`;
+</script>
+</body>
+</html>
