@@ -487,13 +487,24 @@ const RAW_DATA = [
 ];
 
 // 데이터 파싱 및 인덱싱
-// 학번 키: 1학년+학급2자리+번호2자리, 교사는 105T1/105T2 등
+// 아이디 prefix → 실제 학급 매핑 (시스템 학급 ≠ 운영 학급)
+const PREFIX_TO_CLASS = {
+  'h111': 8,
+  'h112': 6,
+  'h113': 5,
+  'h114': 7
+};
+
 const accounts = {};   // key: "10501" → {grade, klass, num, id, pw, label}
 const byClass = {};    // class → [번호 목록]
 
 RAW_DATA.forEach(row => {
-  const [grade, klass, num, id, pw] = row;
+  const [grade, _origKlass, num, id, pw] = row;
   if (!grade) return;
+
+  const prefix = id.substring(0, 4);
+  const klass = PREFIX_TO_CLASS[prefix];
+  if (!klass) return;
 
   let key, label;
   const gradeStr = String(grade);
